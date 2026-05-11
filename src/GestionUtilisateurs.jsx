@@ -49,34 +49,26 @@ export default function GestionUtilisateurs({ onClose }) {
     setResult(null);
     try {
       // 1. Création de l'utilisateur Auth
+      // Le rôle est passé dans raw_user_meta_data — un trigger PostgreSQL
+      // (on_auth_user_created) l'insère automatiquement dans public.user_roles
+      // avec SECURITY DEFINER, sans dépendre de la session courante.
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: { nom },              // stocké dans user_metadata, utile pour displayName
+          data: { nom, role },
           emailRedirectTo: window.location.origin,
         },
       });
       if (signUpError) throw signUpError;
 
-      // 2. Récupérer l'user_id (peut être présent dans signUpData OU via lookup)
-      let userId = signUpData?.user?.id;
-      if (!userId) {
-        // Cas où la confirmation email est requise — l'user existe en base
-        // mais signUp ne renvoie pas l'id. On le retrouve via l'API Supabase.
-        // En l'absence d'accès admin côté client, on prévient l'admin.
+      if (!signUpData?.user?.id) {
         setResult({
           success: false,
-          message: `Compte créé pour ${email}, mais l'attribution du rôle nécessite que l'utilisateur clique sur le lien de confirmation reçu par email. Vous pourrez ensuite lui attribuer le rôle "${ROLES[role]?.label}" via Supabase Dashboard.`,
+          message: `Compte créé pour ${email}, mais en attente de confirmation email. Le rôle "${ROLES[role]?.label}" sera attribué automatiquement à la confirmation.`,
         });
         return;
       }
-
-      // 3. Insertion du rôle dans user_roles
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .upsert({ user_id: userId, role, email, nom }, { onConflict: 'user_id' });
-      if (roleError) throw roleError;
 
       setResult({
         success: true,
