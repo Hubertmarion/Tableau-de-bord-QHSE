@@ -91,7 +91,7 @@ export default function ArchivesExport() {
       const t = TABLES[i];
       setProgress(Math.round((i / TABLES.length) * 90));
 
-      const { data } = await supabase.from(t.id).select('*').order('created_at', { ascending: false });
+      const { data } = await supabase.from(t.id).select('*').order('id', { ascending: false });
       const rows = data || [];
       recap[t.id] = rows.length;
 

@@ -67,7 +67,7 @@ export default function ReunionsQHSE() {
       setReunions(data);
       // Charger les actions stockées en JSON (colonne actions_json)
       const map = {};
-      data.forEach(r => { map[r.id] = r.actions_json ? JSON.parse(r.actions_json) : []; });
+      data.forEach(r => { map[r.id] = Array.isArray(r.actions_json) ? r.actions_json : (r.actions_json ? JSON.parse(r.actions_json) : []); });
       setActionsReu(map);
     }
     setLoading(false);
@@ -78,7 +78,7 @@ export default function ReunionsQHSE() {
     if (!form.date) { toast.error('La date est obligatoire'); return; }
     const { data, error } = await supabase
       .from('reunions_qhse')
-      .insert([{ ...form, actions_json: '[]' }])
+      .insert([{ ...form, actions_json: [] }])
       .select();
     if (error) { toast.error('Erreur : ' + error.message); return; }
     if (data) {
@@ -127,7 +127,7 @@ export default function ReunionsQHSE() {
   const saveActions = async (reunionId, newList) => {
     const { error } = await supabase
       .from('reunions_qhse')
-      .update({ actions_json: JSON.stringify(newList) })
+      .update({ actions_json: newList })
       .eq('id', reunionId);
     if (error) toast.error('Erreur sauvegarde actions : ' + error.message);
     else setActionsReu(prev => ({ ...prev, [reunionId]: newList }));

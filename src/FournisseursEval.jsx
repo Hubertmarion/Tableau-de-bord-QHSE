@@ -154,6 +154,11 @@ export default function FournisseursEval() {
 
   const secteurs = useMemo(() => ['Tous', ...[...new Set(fournisseurs.map(f => f.secteur).filter(Boolean))].sort()], [fournisseurs]);
 
+  const displayed = useMemo(
+    () => sorted.filter(f => filtres.some(ff => ff.id === f.id)),
+    [sorted, filtres]
+  );
+
   const inp = { padding: '6px 10px', fontSize: 12, background: p.bgInput, border: '1px solid ' + p.borderInput, borderRadius: 6, color: p.text1, fontFamily: 'inherit', outline: 'none', width: '100%' };
   const lbl = { fontSize: 10, fontWeight: 700, color: p.text4, textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 4 };
 
@@ -228,7 +233,7 @@ export default function FournisseursEval() {
               </tr>
             </thead>
             <tbody>
-              {sorted.filter(f => filtres.some(ff => ff.id === f.id)).map((row, idx) => {
+              {displayed.map((row, idx) => {
                 const st = STATUT_STYLE[row.statut] || STATUT_STYLE['En évaluation'];
                 const score = row._score || calcScore(row);
                 const isOpen = expanded === row.id;
